@@ -1,4 +1,4 @@
-module playground-golang
+module github.com/k-jun/todo-server
 
 go 1.23.4
 
