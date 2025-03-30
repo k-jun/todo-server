@@ -16,7 +16,8 @@ func todosGet(repo Repo) func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["id"]
 		todo := &Todo{ID: id}
-		if _, err := repo.TodoGet(todo); err != nil {
+		todo, err := repo.TodoGet(todo)
+		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -102,15 +103,17 @@ func todosPut(repo Repo) func(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	mux := http.NewServeMux()
-	repo := NewRepo()
-	mux.HandleFunc("GET /todos", todosGetAll(repo))
-	mux.HandleFunc("GET /todos/{id}", todosGet(repo))
-	mux.HandleFunc("POST /todos", todosPost(repo))
-	mux.HandleFunc("DELETE /todos/{id}", todosDel(repo))
-	mux.HandleFunc("PUT /todos/{id}", todosPut(repo))
 
-	log.Printf("Starting server on :8080")
+	mux := mux.NewRouter()
+	repo := NewRepo()
+	mux.HandleFunc("/todos", todosGetAll(repo)).Methods("GET")
+	mux.HandleFunc("/todos/{id}", todosGet(repo)).Methods("GET")
+	mux.HandleFunc("/todos", todosPost(repo)).Methods("POST")
+	mux.HandleFunc("/todos/{id}", todosDel(repo)).Methods("DELETE")
+	mux.HandleFunc("/todos/{id}", todosPut(repo)).Methods("PUT")
+
+	mux.Use(Logger)
+
 	if err := http.ListenAndServe(":8080", mux); err != nil {
 		log.Fatal(err)
 	}
